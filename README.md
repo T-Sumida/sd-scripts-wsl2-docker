@@ -1,84 +1,58 @@
-This repository contains training, generation and utility scripts for Stable Diffusion.
+## リポジトリについて
+Stable Diffusionの学習、画像生成、その他のスクリプトを入れたリポジトリです。
 
-## Updates
+GUIやPowerShellスクリプトなど、より使いやすくする機能が[bmaltais氏のリポジトリ](https://github.com/bmaltais/kohya_ss)で提供されています（英語です）のであわせてご覧ください。bmaltais氏に感謝します。
 
-- 22 Jan. 2023, 2023/1/22
-  - Fix script to check LoRA weights ``check_lora_weights.py``. Some layer weights were shown as ``0.0`` even if the layer is trained, because of the overflow of ``torch.mean``. Sorry for the confusion.
-  - Noe the script shows the mean of the absolute values of the weights, and the minimum of the absolute values of the weights.
-  - LoRAの重みをチェックするスクリプト ``check_lora_weights.py`` を修正しました。一部のレイヤーで学習されているにもかかわらず重みが ``0.0`` と表示されていました。混乱を招き申し訳ありません。
-  - スクリプトを「重みの絶対の平均」と「重みの絶対値の最小値」を表示するよう修正しました。
+[kohya-ss氏のWindows用リポジトリ](https://github.com/kohya-ss/sd-scripts)をWSL2 on Dockerで利用できるようにしたリポジトリです。kohya-ss氏に感謝します。
 
-Please read [Releases](https://github.com/kohya-ss/sd-scripts/releases) for recent updates.
-最近の更新情報は [Release](https://github.com/kohya-ss/sd-scripts/releases) をご覧ください。
+以下記載はほぼオリジナルのリポジトリと同様で、環境構築部分を変更しています。
 
-##
 
-[日本語版README](./README-ja.md)
+以下のスクリプトがあります。
 
-For easier use (GUI and PowerShell scripts etc...), please visit [the repository maintained by bmaltais](https://github.com/bmaltais/kohya_ss). Thanks to @bmaltais!
+* DreamBooth、U-NetおよびText Encoderの学習をサポート
+* fine-tuning、同上
+* 画像生成
+* モデル変換（Stable Diffision ckpt/safetensorsとDiffusersの相互変換）
 
-This repository contains the scripts for:
+## 使用法について
 
-* DreamBooth training, including U-Net and Text Encoder
-* fine-tuning (native training), including U-Net and Text Encoder
-* LoRA training
-* image generation
-* model conversion (supports 1.x and 2.x, Stable Diffision ckpt/safetensors and Diffusers)
+当リポジトリ内およびnote.comに記事がありますのでそちらをご覧ください（将来的にはすべてこちらへ移すかもしれません）。
 
-## About requirements.txt
+* note.com [環境整備とDreamBooth学習スクリプトについて](https://note.com/kohya_ss/n/nba4eceaa4594)
+* [fine-tuningのガイド](./fine_tune_README_ja.md):
+BLIPによるキャプショニングと、DeepDanbooruまたはWD14 taggerによるタグ付けを含みます
+* note.com [画像生成スクリプト](https://note.com/kohya_ss/n/n2693183a798e)
+* note.com [モデル変換スクリプト](https://note.com/kohya_ss/n/n374f316fe4ad)
 
-These files do not contain requirements for PyTorch. Because the versions of them depend on your environment. Please install PyTorch at first (see installation guide below.) 
+## 想定環境
 
-The scripts are tested with PyTorch 1.12.1 and 1.13.0, Diffusers 0.10.2.
+- Windows 10
+  - RTX2080Ti
+- Docker Desktop（インストールは[ここ](https://qiita.com/sumita_v09/items/810685f77cdd0586db16)を参照）
 
-## Links to how-to-use documents
+## Docker Imageの作成
 
-All documents are in Japanese currently, and CUI based.
+Dockerが起動している状態で以下コマンドを実行する。
 
-* [DreamBooth training guide](./train_db_README-ja.md)
-* [Step by Step fine-tuning guide](./fine_tune_README_ja.md):
-Including BLIP captioning and tagging by DeepDanbooru or WD14 tagger
-* [training LoRA](./train_network_README-ja.md)
-* note.com [Image generation](https://note.com/kohya_ss/n/n2693183a798e)
-* note.com [Model conversion](https://note.com/kohya_ss/n/n374f316fe4ad)
+```shell
+docker build . -t diffuser:0.1
+```
 
-## Windows Required Dependencies
+## Dockerコンテナを起動・環境構築（残った分）
 
-Python 3.10.6 and Git:
+```shell
+docker run --gpus all -it --rm -v {このフォルダまでの絶対パス}/sd-scripts-wsl2-docker:/work diffuser:0.1
 
-- Python 3.10.6: https://www.python.org/ftp/python/3.10.6/python-3.10.6-amd64.exe
-- git: https://git-scm.com/download/win
-
-Give unrestricted script access to powershell so venv can work:
-
-- Open an administrator powershell window
-- Type `Set-ExecutionPolicy Unrestricted` and answer A
-- Close admin powershell window
-
-## Windows Installation
-
-Open a regular Powershell terminal and type the following inside:
-
-```powershell
-git clone https://github.com/kohya-ss/sd-scripts.git
-cd sd-scripts
-
-python -m venv --system-site-packages venv
-.\venv\Scripts\activate
-
-pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
-pip install --upgrade -r requirements.txt
-pip install -U -I --no-deps https://github.com/C43H66N12O12S2/stable-diffusion-webui/releases/download/f/xformers-0.0.14.dev0-cp310-cp310-win_amd64.whl
-
-cp .\bitsandbytes_windows\*.dll .\venv\Lib\site-packages\bitsandbytes\
-cp .\bitsandbytes_windows\cextension.py .\venv\Lib\site-packages\bitsandbytes\cextension.py
-cp .\bitsandbytes_windows\main.py .\venv\Lib\site-packages\bitsandbytes\cuda_setup\main.py
-
+(ここからコンテナ内での操作)
+cd /work
 accelerate config
 
 ```
 
-Answers to accelerate config:
+accelerate configの質問には以下のように答えてください。（bf16で学習する場合、最後の質問にはbf16と答えてください。）
+
+※0.15.0から日本語環境では選択のためにカーソルキーを押すと落ちます（……）。数字キーの0、1、2……で選択できますので、そちらを使ってください。
 
 ```txt
 - This machine
@@ -90,34 +64,22 @@ Answers to accelerate config:
 - fp16
 ```
 
-note: Some user reports ``ValueError: fp16 mixed precision requires a GPU`` is occurred in training. In this case, answer `0` for the 6th question: 
-``What GPU(s) (by id) should be used for training on this machine as a comma-separated list? [all]:`` 
+※場合によって ``ValueError: fp16 mixed precision requires a GPU`` というエラーが出ることがあるようです。この場合、6番目の質問（
+``What GPU(s) (by id) should be used for training on this machine as a comma-separated list? [all]:``）に「0」と答えてください。（id `0`のGPUが使われます。）
 
-(Single GPU with id `0` will be used.)
 
-## Upgrade
+## 謝意
 
-When a new release comes out you can upgrade your repo with the following command:
+LoRAの実装は[cloneofsimo氏のリポジトリ](https://github.com/cloneofsimo/lora)を基にしたものです。感謝申し上げます。
 
-```powershell
-cd sd-scripts
-git pull
-.\venv\Scripts\activate
-pip install --upgrade -r requirements.txt
-```
+## ライセンス
 
-Once the commands have completed successfully you should be ready to use the new version.
-
-## Credits
-
-The implementation for LoRA is based on [cloneofsimo's repo](https://github.com/cloneofsimo/lora). Thank you for great work!!!
-
-## License
-
-The majority of scripts is licensed under ASL 2.0 (including codes from Diffusers, cloneofsimo's), however portions of the project are available under separate license terms:
+スクリプトのライセンスはASL 2.0ですが（Diffusersおよびcloneofsimo氏のリポジトリ由来のものも同様）、一部他のライセンスのコードを含みます。
 
 [Memory Efficient Attention Pytorch](https://github.com/lucidrains/memory-efficient-attention-pytorch): MIT
 
 [bitsandbytes](https://github.com/TimDettmers/bitsandbytes): MIT
 
 [BLIP](https://github.com/salesforce/BLIP): BSD-3-Clause
+
+
